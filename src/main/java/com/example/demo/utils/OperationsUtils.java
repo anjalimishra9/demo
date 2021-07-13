@@ -1,27 +1,25 @@
 package com.example.demo.utils;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.ResourceUtils;
+import org.springframework.core.io.ClassPathResource;
 
 import com.example.demo.model.Operations;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 
-
 /**
  * This class is used to provide common utils functions.
  */
 public class OperationsUtils {
-	
+
 	/** The Constant LOGGER. */
 	private static final Logger LOGGER = LoggerFactory.getLogger(OperationsUtils.class);
 
@@ -35,19 +33,19 @@ public class OperationsUtils {
 	 */
 	public static List<Operations> getOpreationsListFromCSVFile() {
 		LOGGER.debug("FileUtils:Method Called>getOpreationsListFromCSVFile");
-		File file = null;
-		try {
-			if (operationsList == null) {
-				file = ResourceUtils
-						.getFile("classpath:static/csvfiles/DBNetz-Betriebsstellenverzeichnis-Stand2021-07.csv");
-				Reader reader = Files.newBufferedReader(Paths.get(file.toURI()), StandardCharsets.UTF_8);
-				CsvToBean<Operations> csvToBean = new CsvToBeanBuilder<Operations>(reader).withSeparator(';')
-						.withType(Operations.class).withSkipLines(1).withIgnoreLeadingWhiteSpace(true).build();
-				operationsList = csvToBean.parse();
+		if (operationsList == null) {
+			try {
+				InputStream resource = new ClassPathResource(
+						"static/csvfiles/DBNetz-Betriebsstellenverzeichnis-Stand2021-07.csv").getInputStream();
+				try (BufferedReader reader = new BufferedReader(
+						new InputStreamReader(resource, StandardCharsets.UTF_8))) {
+					CsvToBean<Operations> csvToBean = new CsvToBeanBuilder<Operations>(reader).withSeparator(';')
+							.withType(Operations.class).withSkipLines(1).withIgnoreLeadingWhiteSpace(true).build();
+					operationsList = csvToBean.parse();
+				}
+			} catch (IOException e) {
+				LOGGER.error(String.format("Unable to process file! Error Message:%s", e.getMessage()));
 			}
-
-		} catch (IOException e) {
-			LOGGER.error(String.format("Unable to process file: %s. Error Message:%s", file.getName(), e.getMessage()));
 		}
 
 		return operationsList;
